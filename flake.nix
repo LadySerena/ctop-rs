@@ -14,11 +14,23 @@
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
-        buildInputs = with pkgs;
-          [
-            (rust-bin.stable.latest.default.override {
-              extensions = [ "rust-analyzer" "rust-src" ];
-            })
-          ];
-      in with pkgs; { devShells.default = mkShell { inherit buildInputs; }; });
+        buildInputs = with pkgs; [
+          (rust-bin.stable.latest.default.override {
+            extensions = [ "rust-analyzer" "rust-src" ];
+          })
+          procps
+          clang
+          libllvm
+          libclang
+          libclang.lib
+        ];
+      in with pkgs; {
+        devShells.default = mkShell {
+          inherit buildInputs;
+          nativeBuildInputs = [ pkg-config ];
+          shellHook = ''
+            export LIBCLANG_PATH="${pkgs.libclang.lib}/lib";
+          '';
+        };
+      });
 }
