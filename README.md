@@ -11,3 +11,4 @@ sort container workloads into
 - cpu load averages
 - interrupt rate
 - context switching
+- configurable pod labels in output

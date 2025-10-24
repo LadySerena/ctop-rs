@@ -2,8 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+use api::verify_mounted_proc;
+
+pub mod api;
 
 fn main() {
-    fatal_proc_unmounted();
+    verify_mounted_proc();
+    println!("look i didn't blow up!")
 }
