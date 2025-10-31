@@ -20,6 +20,7 @@
           })
           procps
           clang
+          valgrind
           libllvm
           libclang
           libclang.lib
