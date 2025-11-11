@@ -16,7 +16,7 @@
         pkgs = import nixpkgs { inherit system overlays; };
         buildInputs = with pkgs; [
           (rust-bin.stable.latest.default.override {
-            extensions = [ "rust-analyzer" "rust-src" ];
+            extensions = [ "rust-analyzer" "rust-src" "rust-docs" "rust-std" ];
           })
           procps
           clang
