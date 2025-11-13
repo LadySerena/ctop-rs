@@ -11,8 +11,11 @@ fn main() {
                 .map(|path| format!("-I{}", path.to_string_lossy())),
         )
         .clang_args(library.libs.iter().map(|lib| format!("-l{lib}")))
+        .clang_arg("-fparse-all-comments")
         .header("wrapper.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+        .rustified_enum(".*")
+        .generate_comments(true)
         .generate()
         .unwrap();
 

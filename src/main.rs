@@ -4,23 +4,20 @@
 
 use api::verify_mounted_proc;
 
-use crate::api::{
-    pids_item_PIDS_CGROUP, pids_item_PIDS_CMD, pids_item_PIDS_ID_PID, pids_item_PIDS_TICS_ALL,
-    pids_item_PIDS_TICS_SYSTEM, pids_item_PIDS_TICS_USER, scan_procs,
-};
+use crate::api::{pids_item, scan_procs};
 
 pub mod api;
 
 fn main() {
     verify_mounted_proc();
-    let mut proc_fields = [
-        pids_item_PIDS_TICS_ALL,
-        pids_item_PIDS_TICS_USER,
-        pids_item_PIDS_TICS_SYSTEM,
-        pids_item_PIDS_CMD,
-        pids_item_PIDS_ID_PID,
-        pids_item_PIDS_CGROUP,
+    let proc_fields = vec![
+        pids_item::PIDS_TICS_ALL,
+        pids_item::PIDS_TICS_USER,
+        pids_item::PIDS_TICS_SYSTEM,
+        pids_item::PIDS_CMD,
+        pids_item::PIDS_ID_PID,
+        pids_item::PIDS_CGROUP,
     ];
-    let procs = scan_procs(&mut proc_fields);
+    let procs = scan_procs(proc_fields);
     println!("nothing blew up");
 }

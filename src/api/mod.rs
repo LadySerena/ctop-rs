@@ -1,8 +1,17 @@
-use std::ptr::null_mut;
+use std::{ffi::c_uint, ptr::null_mut};
 
 use nix::errno::Errno;
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+use crate::api::c_symbols::{
+    fatal_proc_unmounted, pids_fetch, pids_info, pids_result__bindgen_ty_1, procps_pids_new,
+    procps_pids_reap,
+};
+
+mod c_symbols {
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+}
+
+pub use c_symbols::pids_item;
 
 pub struct Pid_Counts {
     pub total: i32,
@@ -14,7 +23,7 @@ pub struct Pid_Counts {
 }
 
 impl Pid_Counts {
-    fn from_ptr(ptr: *mut pids_counts) -> Self {
+    fn from_ptr(ptr: *mut c_symbols::pids_counts) -> Self {
         let de_ref = unsafe { *ptr };
         Pid_Counts {
             total: de_ref.total,
@@ -37,8 +46,9 @@ pub fn verify_mounted_proc() {
     unsafe { fatal_proc_unmounted(null_mut(), 0) };
 }
 
-pub fn scan_procs(infos: &mut [pids_item]) -> &pids_fetch {
-    let container = new(infos);
+pub fn scan_procs(infos: Vec<pids_item>) -> pids_fetch {
+    let mut cloned_vec = infos.clone();
+    let container = new(&mut cloned_vec);
     let pids = reap(container);
     // TODO convert pointer bullshit into real struct
     // drop container?
@@ -47,16 +57,17 @@ pub fn scan_procs(infos: &mut [pids_item]) -> &pids_fetch {
     // pointer arithmetic see ~/Code/ladyserena/ctop/main.c
     for n in 0..loop_bound {
         let stack = unsafe { (*(*pids.stacks.add(n))).head };
+        // let result = pids_result__bindgen_ty_1::s_ch;
         // TODO lookup table of pids_item to expected datadog
         // see pids_item enum in libproc2/pids.h for info
         // unsafe { (*stack).result.u_int}
     }
-    pids
+    pids.to_owned()
 }
 
 fn reap(info: &mut pids_info) -> &pids_fetch {
     unsafe {
-        let fetch = procps_pids_reap(info, pids_fetch_type_PIDS_FETCH_TASKS_ONLY);
+        let fetch = procps_pids_reap(info, c_symbols::pids_fetch_type::PIDS_FETCH_TASKS_ONLY);
         if fetch.is_null() {
             panic!("error with reading proc: {}", Errno::last().desc())
         }
