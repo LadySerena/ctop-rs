@@ -18,6 +18,6 @@ fn main() {
         pids_item::PIDS_ID_PID,
         pids_item::PIDS_CGROUP,
     ];
-    let procs = scan_procs(proc_fields);
+    scan_procs(proc_fields);
     println!("nothing blew up");
 }

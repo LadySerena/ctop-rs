@@ -28,7 +28,7 @@
       in with pkgs; {
         devShells.default = mkShell {
           inherit buildInputs;
-          nativeBuildInputs = [ pkg-config ];
+          nativeBuildInputs = [ pkg-config gdb gdbgui ];
           shellHook = ''
             export LIBCLANG_PATH="${pkgs.libclang.lib}/lib";
           '';

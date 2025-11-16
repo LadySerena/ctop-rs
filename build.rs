@@ -12,9 +12,10 @@ fn main() {
         )
         .clang_args(library.libs.iter().map(|lib| format!("-l{lib}")))
         .clang_arg("-fparse-all-comments")
+        .clang_arg("-fretain-comments-from-system-headers")
         .header("wrapper.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        .rustified_enum(".*")
+        .constified_enum_module("pids_item|pids_fetch_type")
         .generate_comments(true)
         .generate()
         .unwrap();

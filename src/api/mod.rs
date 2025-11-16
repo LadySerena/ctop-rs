@@ -1,4 +1,4 @@
-use std::{ffi::c_uint, ptr::null_mut};
+use std::ptr::null_mut;
 
 use nix::errno::Errno;
 
@@ -12,6 +12,7 @@ mod c_symbols {
 }
 
 pub use c_symbols::pids_item;
+pub use c_symbols::pids_item::*;
 
 pub struct Pid_Counts {
     pub total: i32,
@@ -36,6 +37,37 @@ impl Pid_Counts {
     }
 }
 
+fn read_from_union(result: pids_result__bindgen_ty_1) {
+    unsafe {
+        match result {
+            pids_result__bindgen_ty_1 { s_ch } => {
+                println!("{}", s_ch)
+            }
+            pids_result__bindgen_ty_1 { s_int } => {
+                println!("{}", s_int)
+            }
+            pids_result__bindgen_ty_1 { u_int } => {
+                println!("{}", u_int)
+            }
+            pids_result__bindgen_ty_1 { ul_int } => {
+                println!("{}", ul_int)
+            }
+            pids_result__bindgen_ty_1 { ull_int } => {
+                println!("{}", ull_int)
+            }
+            pids_result__bindgen_ty_1 { str_ } => {
+                println!("{:#?}", str_)
+            }
+            pids_result__bindgen_ty_1 { strv } => {
+                println!("{:#?}", strv)
+            }
+            pids_result__bindgen_ty_1 { real } => {
+                println!("{:#?}", real)
+            }
+        };
+    };
+}
+
 /// Verifies that /proc is mounted and readable
 /// # Panics
 /// per libproc2's docs [1] this call will result in a panic to the caller,
@@ -46,7 +78,7 @@ pub fn verify_mounted_proc() {
     unsafe { fatal_proc_unmounted(null_mut(), 0) };
 }
 
-pub fn scan_procs(infos: Vec<pids_item>) -> pids_fetch {
+pub fn scan_procs(infos: Vec<pids_item::Type>) -> pids_fetch {
     let mut cloned_vec = infos.clone();
     let container = new(&mut cloned_vec);
     let pids = reap(container);
@@ -58,9 +90,16 @@ pub fn scan_procs(infos: Vec<pids_item>) -> pids_fetch {
     for n in 0..loop_bound {
         let stack = unsafe { (*(*pids.stacks.add(n))).head };
         // let result = pids_result__bindgen_ty_1::s_ch;
-        // TODO lookup table of pids_item to expected datadog
+        // TODO lookup table of pids_item to expected datatype from union
         // see pids_item enum in libproc2/pids.h for info
         // unsafe { (*stack).result.u_int}
+        //
+        // let key = unsafe { (*stack).item };
+        // https://doc.rust-lang.org/reference/items/unions.html#r-items.union.pattern.subpattern
+        // TODO maybe don't futz with the key beyond building a map
+        // and then implement display???
+        let result = unsafe { (*stack).result };
+        read_from_union(result);
     }
     pids.to_owned()
 }
@@ -80,8 +119,11 @@ fn reap(info: &mut pids_info) -> &pids_fetch {
     }
 }
 
-fn new(infos: &mut [pids_item]) -> &mut pids_info {
+fn new(infos: &mut [pids_item::Type]) -> &mut pids_info {
     let mut info = std::mem::MaybeUninit::<*mut pids_info>::uninit();
+    for beep in infos.iter() {
+        println!("{:#?}", beep)
+    }
     unsafe {
         let res = procps_pids_new(
             info.as_mut_ptr(),
