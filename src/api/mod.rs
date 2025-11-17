@@ -41,7 +41,7 @@ fn read_from_union(result: pids_result__bindgen_ty_1) {
     unsafe {
         match result {
             pids_result__bindgen_ty_1 { s_ch } => {
-                println!("{}", s_ch)
+                println!("s_ch {}", s_ch)
             }
             pids_result__bindgen_ty_1 { s_int } => {
                 println!("{}", s_int)
@@ -119,16 +119,14 @@ fn reap(info: &mut pids_info) -> &pids_fetch {
     }
 }
 
-fn new(infos: &mut [pids_item::Type]) -> &mut pids_info {
-    let mut info = std::mem::MaybeUninit::<*mut pids_info>::uninit();
-    for beep in infos.iter() {
-        println!("{:#?}", beep)
-    }
+fn new(items: &mut [pids_item::Type]) -> &mut pids_info {
+    let mut info: *mut pids_info = std::ptr::null_mut();
     unsafe {
+        let info_ptr: *mut *mut pids_info = &mut info;
         let res = procps_pids_new(
-            info.as_mut_ptr(),
-            infos.as_mut_ptr(),
-            infos.len().try_into().unwrap(),
+            info_ptr,
+            items.as_mut_ptr(),
+            items.len().try_into().unwrap(),
         );
         // error happened
         if res < 0 {
@@ -139,10 +137,6 @@ fn new(infos: &mut [pids_item::Type]) -> &mut pids_info {
             panic!("error with allocation: {}", parsed_errno.desc())
         }
 
-        if let Some(stuff) = info.assume_init().as_mut() {
-            stuff
-        } else {
-            panic!("convert pointer to reference")
-        }
+        info.as_mut().unwrap()
     }
 }
