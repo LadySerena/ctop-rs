@@ -15,7 +15,7 @@ fn main() {
         .clang_arg("-fretain-comments-from-system-headers")
         .header("wrapper.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        .constified_enum_module("pids_item|pids_fetch_type")
+        .rustified_enum("pids_item|pids_fetch_type")
         .generate_comments(true)
         .generate()
         .unwrap();
