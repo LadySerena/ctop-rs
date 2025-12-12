@@ -7,6 +7,8 @@ use crate::api::c_symbols::{
     procps_pids_reap,
 };
 
+#[allow(dead_code)]
+#[allow(clippy::upper_case_acronyms)]
 mod c_symbols {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
