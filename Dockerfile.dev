@@ -1,0 +1,16 @@
+FROM rust:1-trixie
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y \
+    llvm \
+    clang \
+    clang-tools \
+    pkg-config \
+    libproc2-dev
+
+# Copy our source and setup our working dir.
+COPY . /tmp/build
+WORKDIR /tmp/build
+
+RUN cargo build
+
+ENTRYPOINT [ "bash" ]
