@@ -1,23 +1,36 @@
-use std::ptr::null_mut;
+use std::{collections::HashMap, ptr::null_mut};
 
 use nix::errno::Errno;
 
 use crate::api::{
-    c_symbols::{fatal_proc_unmounted, pids_fetch, pids_info, procps_pids_new, procps_pids_reap},
-    union::{read_from_union, Pid_result, Process_Info},
+    bindings::{
+        fatal_proc_unmounted, pids_counts, pids_fetch, pids_fetch_type, pids_info, procps_pids_new,
+        procps_pids_reap,
+    },
+    result_parsing::{read_from_union, PidResult},
 };
 
-mod union;
-
+#[allow(clippy::all)]
+#[allow(non_upper_case_globals)]
+#[allow(non_camel_case_types)]
+#[allow(non_snake_case)]
 #[allow(dead_code)]
-#[allow(clippy::upper_case_acronyms)]
-mod c_symbols {
+mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
+#[allow(dead_code)]
+mod result_parsing;
 
-pub use c_symbols::pids_item;
+mod time;
 
-pub struct Pid_Counts {
+pub use bindings::pids_item;
+
+pub struct PidEntry {
+    pub pid: i32,
+    pub info: HashMap<pids_item, PidResult>,
+}
+
+pub struct PidCounts {
     pub total: i32,
     pub running: i32,
     pub sleeping: i32,
@@ -26,10 +39,10 @@ pub struct Pid_Counts {
     pub other: i32,
 }
 
-impl Pid_Counts {
-    fn from_ptr(ptr: *mut c_symbols::pids_counts) -> Self {
+impl PidCounts {
+    fn from_ptr(ptr: *mut pids_counts) -> Self {
         let de_ref = unsafe { *ptr };
-        Pid_Counts {
+        PidCounts {
             total: de_ref.total,
             running: de_ref.running,
             sleeping: de_ref.sleeping,
@@ -50,38 +63,38 @@ pub fn verify_mounted_proc() {
     unsafe { fatal_proc_unmounted(null_mut(), 0) };
 }
 
-pub fn scan_procs(items: Vec<pids_item>) -> pids_fetch {
-    let mut cloned_vec = items.clone();
-    let container = new(&mut cloned_vec);
+pub fn scan_procs(mut items: Vec<pids_item>) -> Vec<PidEntry> {
+    let item_len = items.len();
+    let container = new(&mut items);
     let pids = reap(container);
-    // TODO convert pointer bullshit into real struct
-    // drop container?
-    let counts = Pid_Counts::from_ptr(pids.counts);
+    let counts = PidCounts::from_ptr(pids.counts);
     let loop_bound = usize::try_from(counts.total).expect("convert total to usize");
-    print_header(&items);
-    // pointer arithmetic see ~/Code/ladyserena/ctop/main.c
+
+    let mut list: Vec<PidEntry> = Vec::with_capacity(loop_bound);
+    // pointer arithmetic
+    // each pid has a stack
+    // each stack contains the items from procfs as defined by items variable
     for n in 0..loop_bound {
-        let mut entry: Vec<Process_Info> = Vec::with_capacity(items.len());
         let stack = unsafe { (*(*pids.stacks.add(n))).head };
-        for i in 0..items.len() {
+        let mut data_hash: HashMap<pids_item, PidResult> = HashMap::with_capacity(item_len);
+        for i in 0..item_len {
             let inner = unsafe { *stack.add(i) };
             let key: pids_item = inner.item;
             let result = inner.result;
-            entry.push(Process_Info {
-                item: key,
-                value: read_from_union(key, result),
-            });
+            let data = read_from_union(key, result);
+            data_hash.insert(key, data);
         }
-        println!("{:#?}", entry);
+        list.push(PidEntry {
+            pid: 0,
+            info: data_hash,
+        });
     }
-    pids.to_owned()
+    list
 }
-
-fn print_header(items: &[pids_item]) {}
 
 fn reap(info: &mut pids_info) -> &pids_fetch {
     unsafe {
-        let fetch = procps_pids_reap(info, c_symbols::pids_fetch_type::PIDS_FETCH_TASKS_ONLY);
+        let fetch = procps_pids_reap(info, pids_fetch_type::PIDS_FETCH_TASKS_ONLY);
         if fetch.is_null() {
             panic!("error with reading proc: {}", Errno::last().desc())
         }
