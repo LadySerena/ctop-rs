@@ -1,37 +1,16 @@
-pub mod proc;
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
 
-use std::{
-    ffi::OsStr,
-    fs::{self},
-    io,
-    path::PathBuf,
-};
+#[cfg(target_os = "linux")]
+mod proc_bindings;
 
-use clap::Parser;
-use nix::unistd;
-
-#[derive(Parser)]
-#[command(version, about, long_about = None)]
-struct Cli {
-    #[arg(short, long, default_value = OsStr::new("/proc"))]
-    proc_path: PathBuf,
+#[cfg(target_os = "linux")]
+fn main() {
+    proc_bindings::scan_procfs(vec![proc_bindings::pids_item::PIDS_CGROUP_V]).unwrap()
 }
 
-fn main() -> io::Result<()> {
-    let args = Cli::parse();
-
-    let entries = fs::read_dir(args.proc_path)?.filter_map(|e| e.ok());
-    let clock_rate = unistd::sysconf(unistd::SysconfVar::CLK_TCK)
-        .unwrap()
-        .unwrap();
-
-    println!("{clock_rate}");
-
-    for entry in entries {
-        // TODO filter out non /proc/pid dirs
-        // TODO parse out stat
-        println!("{:?}", entry.path())
-    }
-
-    Ok(())
+#[cfg(not(target_os = "linux"))]
+fn main() {
+    println!("warning this project will not build on non linux systems")
 }
