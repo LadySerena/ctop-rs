@@ -38,7 +38,7 @@ pub fn start() -> Result<(), InitError> {
     Ok(())
 }
 
-fn new(items: &mut [pids_item]) -> Result<&mut pids_info, InitError> {
+pub fn new(items: &mut [pids_item]) -> Result<&mut pids_info, InitError> {
     let mut info: *mut pids_info = null_mut();
     unsafe {
         let info_ptr: *mut *mut pids_info = &mut info;
@@ -61,7 +61,7 @@ fn new(items: &mut [pids_item]) -> Result<&mut pids_info, InitError> {
     }
 }
 
-unsafe fn unref(info: &mut pids_info) {
+pub unsafe fn unref(info: &mut pids_info) {
     let p: *mut *mut pids_info = &mut ptr::from_mut(info);
 
     procps_pids_unref(p);
