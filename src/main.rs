@@ -1,13 +1,20 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
+use proc_bindings::Procfs;
 
 #[cfg(target_os = "linux")]
 mod proc_bindings;
 
 #[cfg(target_os = "linux")]
 fn main() {
-    proc_bindings::scan_procfs(vec![proc_bindings::pids_item::PIDS_CGROUP_V]).unwrap()
+    use proc_bindings::pids_item;
+
+    let mut getter = Procfs::new(vec![
+        pids_item::PIDS_CGROUP_V,
+        pids_item::PIDS_ID_PID,
+        pids_item::PIDS_CMDLINE_V,
+    ])
+    .unwrap();
+
+    getter.scan_pids();
 }
 
 #[cfg(not(target_os = "linux"))]
