@@ -2,6 +2,7 @@ use std::{
     ffi::CStr,
     fmt::Display,
     io::{self, Write},
+    os::raw,
 };
 
 use nix::errno::Errno;
@@ -75,15 +76,15 @@ impl From<i32> for Value {
     }
 }
 
-impl From<*mut i8> for Value {
-    fn from(value: *mut i8) -> Self {
+impl From<*mut raw::c_char> for Value {
+    fn from(value: *mut raw::c_char) -> Self {
         let str = unsafe { CStr::from_ptr(value).to_string_lossy().to_string() };
         Self::Str(str)
     }
 }
 
-impl From<*mut *mut i8> for Value {
-    fn from(value: *mut *mut i8) -> Self {
+impl From<*mut *mut raw::c_char> for Value {
+    fn from(value: *mut *mut raw::c_char) -> Self {
         unsafe { Value::from(*value) }
     }
 }
