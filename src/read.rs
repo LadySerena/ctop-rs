@@ -59,6 +59,7 @@ pub enum Value {
     Int32(i32),
     Str(String),
     Uint32(u32),
+    Uint64(u64),
 }
 impl From<i8> for Value {
     fn from(value: i8) -> Self {
@@ -73,6 +74,12 @@ impl From<u32> for Value {
 impl From<i32> for Value {
     fn from(value: i32) -> Self {
         Self::Int32(value)
+    }
+}
+
+impl From<u64> for Value {
+    fn from(value: u64) -> Self {
+        Self::Uint64(value)
     }
 }
 
@@ -96,6 +103,7 @@ impl Display for Value {
             Value::Int32(int) => int.to_string(),
             Value::Str(str) => str.to_string(),
             Value::Uint32(u) => u.to_string(),
+            Value::Uint64(u) => u.to_string(),
         };
         write!(f, "{output}")
     }
@@ -151,6 +159,9 @@ pub fn read_from_union(result: pids_result) -> Result<Value, InvalidFieldError> 
         | pids_item::PIDS_ID_RGID => unsafe { Ok(result.result.u_int.into()) },
         pids_item::PIDS_ID_PID | pids_item::PIDS_ID_PPID | pids_item::PIDS_ID_TGID => unsafe {
             Ok(result.result.s_int.into())
+        },
+        pids_item::PIDS_TICS_ALL | pids_item::PIDS_TICS_ALL_C | pids_item::PIDS_TICS_USER => unsafe {
+            Ok(result.result.ull_int.into())
         },
         // TODO I don't love that we can't give the user errors at compile time - @LadySerena
         _ => Err(InvalidFieldError { field: result.item }),
