@@ -1,17 +1,16 @@
-#[cfg(target_os = "linux")]
-mod proc_bindings;
-use proc_bindings::pids_item;
-use proc_bindings::Procfs;
+use ctop_rs::pids_item;
 #[cfg(target_os = "linux")]
 use std::io::stdout;
-
 #[cfg(target_os = "linux")]
 fn main() {
+    use ctop_rs::{proc_reader::Procfs, ProcReader};
+
     let items = vec![
-        pids_item::PIDS_CGROUP_V,
+        pids_item::PIDS_FLT_MIN,
         pids_item::PIDS_ID_PID,
         pids_item::PIDS_SD_SLICE,
-        pids_item::PIDS_SD_UNIT,
+        pids_item::PIDS_CGROUP_V,
+        pids_item::PIDS_FLAGS,
     ];
     let getter = Procfs::new(items.clone()).unwrap();
     let output = getter.scan_pids().unwrap();
