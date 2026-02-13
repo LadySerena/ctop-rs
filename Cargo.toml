@@ -3,6 +3,9 @@ name = "ctop-rs"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+doctest = false
+
 [dependencies]
 nix = { version = "0.30.1" }
 tabwriter = "1.4.1"
