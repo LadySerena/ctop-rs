@@ -14,7 +14,7 @@
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
-        buildInputs = with pkgs; [
+        nativeBuildInputs = with pkgs; [
           (rust-bin.stable.latest.default.override {
             extensions = [ "rust-analyzer" "rust-src" ];
           })
@@ -24,10 +24,10 @@
           libclang
           libclang.lib
         ];
+        buildInputs = with pkgs; [ pkg-config ];
       in with pkgs; {
         devShells.default = mkShell {
-          inherit buildInputs;
-          nativeBuildInputs = [ pkg-config ];
+          inherit nativeBuildInputs buildInputs;
           shellHook = ''
             export LIBCLANG_PATH="${pkgs.libclang.lib}/lib";
           '';
