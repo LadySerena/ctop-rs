@@ -3,6 +3,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
+use containerd_client::tonic;
 use nix::errno::Errno;
 
 use super::pids_item;
@@ -11,6 +12,7 @@ use super::pids_item;
 pub enum InitError {
     EmptyPointer,
     LibProcError(LibProcError),
+    ContainerClientInit(tonic::transport::Error),
 }
 
 impl Error for InitError {}
@@ -23,14 +25,16 @@ impl Display for InitError {
             InitError::LibProcError(lib_proc_error) => {
                 write!(f, "{lib_proc_error}")
             }
+            InitError::ContainerClientInit(err) => write!(f, "{err}"),
         }
     }
 }
 
 #[derive(Debug)]
 pub enum ReadError {
-    InvalidFieldError(InvalidFieldError),
-    LibProcError(LibProcError),
+    InvalidField(InvalidFieldError),
+    LibProc(LibProcError),
+    MissingItem(pids_item),
 }
 
 impl Error for ReadError {}
@@ -38,8 +42,11 @@ impl Error for ReadError {}
 impl Display for ReadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReadError::InvalidFieldError(invalid_field_error) => invalid_field_error.fmt(f),
-            ReadError::LibProcError(lib_proc_error) => lib_proc_error.fmt(f),
+            ReadError::InvalidField(invalid_field_error) => invalid_field_error.fmt(f),
+            ReadError::LibProc(lib_proc_error) => lib_proc_error.fmt(f),
+            ReadError::MissingItem(pids_item) => {
+                write!(f, "process info missing {pids_item:?}")
+            }
         }
     }
 }

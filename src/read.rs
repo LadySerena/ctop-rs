@@ -15,8 +15,8 @@ use super::{
 };
 
 pub struct ProcessInfo {
-    procs: Vec<Vec<Value>>,
-    items: Vec<pids_item>,
+    pub procs: Vec<Vec<Value>>,
+    pub items: Vec<pids_item>,
 }
 
 impl ProcessInfo {
@@ -115,7 +115,7 @@ pub unsafe fn scan_processes(
 ) -> Result<ProcessInfo, ReadError> {
     let fetch = bindings::procps_pids_reap(info_pointer, pids_fetch_type::PIDS_FETCH_TASKS_ONLY);
     if fetch.is_null() {
-        return Err(ReadError::LibProcError(LibProcError { err: Errno::last() }));
+        return Err(ReadError::LibProc(LibProcError { err: Errno::last() }));
     }
     let loop_bound = usize::try_from((*(*fetch).counts).total).expect("convert total to usize");
     let mut process_info: Vec<Vec<Value>> = Vec::with_capacity(loop_bound);
@@ -126,7 +126,7 @@ pub unsafe fn scan_processes(
             let inner = *stack.add(i);
             match read_from_union(inner) {
                 Ok(value) => entry.push(value),
-                Err(err) => return Err(ReadError::InvalidFieldError(err)),
+                Err(err) => return Err(ReadError::InvalidField(err)),
             };
         }
         process_info.push(entry);
