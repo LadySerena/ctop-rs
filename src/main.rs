@@ -17,7 +17,8 @@ async fn main() {
     let getter = Procfs::new(items.clone()).unwrap();
     let output = getter.scan_pids().unwrap();
     output.write_table(stdout()).unwrap();
-    let meta = ContainerdReader::new("/proc/32791/root/run/containerd/containerd.sock".to_string())
+    // TODO make configurable
+    let meta = ContainerdReader::new("/proc/37374/root/run/containerd/containerd.sock".to_string())
         .await
         .unwrap();
     let mapping = meta.proc_to_container(output).await.unwrap();

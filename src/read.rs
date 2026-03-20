@@ -14,12 +14,12 @@ use super::{
     pids_item,
 };
 
-pub struct ProcessInfo {
+pub struct AllProcInfo {
     pub procs: Vec<Vec<Value>>,
     pub items: Vec<pids_item>,
 }
 
-impl ProcessInfo {
+impl AllProcInfo {
     pub fn write_table<U: io::Write>(&self, w: U) -> io::Result<()> {
         let mut tw = TabWriter::new(w);
         // writing the header
@@ -43,7 +43,7 @@ impl ProcessInfo {
     }
 }
 
-impl IntoIterator for ProcessInfo {
+impl IntoIterator for AllProcInfo {
     type Item = Vec<Value>;
 
     type IntoIter = <Vec<Vec<Value>> as IntoIterator>::IntoIter;
@@ -112,7 +112,7 @@ impl Display for Value {
 pub unsafe fn scan_processes(
     info_pointer: *mut pids_info,
     items: &[pids_item],
-) -> Result<ProcessInfo, ReadError> {
+) -> Result<AllProcInfo, ReadError> {
     let fetch = bindings::procps_pids_reap(info_pointer, pids_fetch_type::PIDS_FETCH_TASKS_ONLY);
     if fetch.is_null() {
         return Err(ReadError::LibProc(LibProcError { err: Errno::last() }));
@@ -132,7 +132,7 @@ pub unsafe fn scan_processes(
         process_info.push(entry);
     }
 
-    Ok(ProcessInfo {
+    Ok(AllProcInfo {
         procs: process_info,
         items: items.to_vec(),
     })

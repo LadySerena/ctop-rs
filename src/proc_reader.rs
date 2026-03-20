@@ -6,7 +6,7 @@ use crate::{
     init::{self, start, unref},
     pids_item,
     read::scan_processes,
-    ProcReader, ProcessInfo,
+    AllProcInfo, ProcReader,
 };
 
 pub struct Procfs {
@@ -24,7 +24,7 @@ impl ProcReader for Procfs {
         })
     }
 
-    fn scan_pids(&self) -> Result<ProcessInfo, ReadError> {
+    fn scan_pids(&self) -> Result<AllProcInfo, ReadError> {
         let proc_infos =
             unsafe { scan_processes(*self.process_stack.borrow_mut(), &self.requested_items) }?;
         Ok(proc_infos)

@@ -1,9 +1,9 @@
-use std::future::Future;
+use std::{collections::HashMap, future::Future};
 
 pub use bindings::pids_item;
 use container_meta_reader::ContainerMeta;
 use errors::{InitError, ReadError};
-use read::ProcessInfo;
+use read::AllProcInfo;
 
 #[allow(clippy::all)]
 #[allow(non_upper_case_globals)]
@@ -24,7 +24,7 @@ pub trait ProcReader {
     where
         Self: Sized;
 
-    fn scan_pids(&self) -> Result<ProcessInfo, ReadError>;
+    fn scan_pids(&self) -> Result<AllProcInfo, ReadError>;
 }
 
 pub trait ContainerMetaReader {
@@ -33,7 +33,7 @@ pub trait ContainerMetaReader {
         Self: Sized;
     fn proc_to_container(
         self,
-        info: ProcessInfo,
+        info: AllProcInfo,
     ) -> impl Future<Output = Result<Vec<ContainerMeta>, ReadError>>;
 }
 

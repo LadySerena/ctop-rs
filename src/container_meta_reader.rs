@@ -8,7 +8,7 @@ use containerd_client::{
     with_namespace,
 };
 
-use crate::{errors::InitError, pids_item, read::ProcessInfo, ContainerMetaReader};
+use crate::{errors::InitError, pids_item, read::AllProcInfo, ContainerMetaReader};
 
 #[derive(Debug)]
 pub struct ContainerMeta {
@@ -38,7 +38,7 @@ impl ContainerMetaReader for ContainerdReader {
 
     async fn proc_to_container(
         mut self,
-        infos: ProcessInfo,
+        infos: AllProcInfo,
     ) -> Result<Vec<ContainerMeta>, crate::errors::ReadError> {
         let Some(pid_index) = infos
             .items
