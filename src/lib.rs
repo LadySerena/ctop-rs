@@ -16,9 +16,9 @@ mod bindings {
 pub mod container_meta_reader;
 mod errors;
 mod init;
+mod network_reader;
 pub mod proc_reader;
 mod read;
-
 pub trait ProcReader {
     fn new(items: Vec<pids_item>) -> Result<Self, InitError>
     where
@@ -35,4 +35,12 @@ pub trait ContainerMetaReader {
         self,
         info: ProcessInfo,
     ) -> impl Future<Output = Result<Vec<ContainerMeta>, ReadError>>;
+}
+
+pub trait NetworkReader {
+    fn new() -> Result<Self, InitError>
+    where
+        Self: Sized;
+
+    fn proc_to_network(self, info: ProcessInfo) -> Result<(), ReadError>;
 }
