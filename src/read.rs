@@ -14,6 +14,7 @@ use super::{
     pids_item,
 };
 
+#[derive(Clone)]
 pub struct AllProcInfo {
     pub procs: Vec<Vec<Value>>,
     pub items: Vec<pids_item>,
@@ -53,7 +54,7 @@ impl IntoIterator for AllProcInfo {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Char(i8),
     Int32(i32),

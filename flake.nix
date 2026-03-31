@@ -19,6 +19,7 @@
             extensions = [ "rust-analyzer" "rust-src" ];
           })
           procps
+          gdbgui
           clang
           libllvm
           libclang

@@ -5,6 +5,8 @@ use container_meta_reader::ContainerMeta;
 use errors::{InitError, ReadError};
 use read::AllProcInfo;
 
+use crate::network_reader::NetworkInfo;
+
 #[allow(clippy::all)]
 #[allow(non_upper_case_globals)]
 #[allow(non_camel_case_types)]
@@ -16,7 +18,7 @@ mod bindings {
 pub mod container_meta_reader;
 mod errors;
 mod init;
-mod network_reader;
+pub mod network_reader;
 pub mod proc_reader;
 mod read;
 pub trait ProcReader {
@@ -42,5 +44,8 @@ pub trait NetworkReader {
     where
         Self: Sized;
 
-    fn proc_to_network(self, info: ProcessInfo) -> Result<(), ReadError>;
+    fn proc_to_network(
+        self,
+        info: AllProcInfo,
+    ) -> Result<HashMap<String, Vec<NetworkInfo>>, ReadError>;
 }
