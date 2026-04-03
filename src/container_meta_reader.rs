@@ -57,6 +57,7 @@ impl ContainerMetaReader for ContainerdReader {
         for (pid, info) in infos.procs {
             // I don't care for this multiline match
             let cgroup = match info
+                .stat
                 .get(cgroup_index)
                 .expect("all processes to have a cgroup")
             {

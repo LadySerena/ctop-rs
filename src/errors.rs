@@ -54,6 +54,12 @@ impl Display for ReadError {
     }
 }
 
+impl From<io::Error> for ReadError {
+    fn from(value: io::Error) -> Self {
+        Self::FileError(value)
+    }
+}
+
 #[derive(Debug)]
 pub struct InvalidFieldError {
     pub field: pids_item,

@@ -2,8 +2,10 @@ use std::{
     collections::HashMap,
     ffi::CStr,
     fmt::Display,
+    fs::{read_dir, read_link},
     io::{self, Write},
     os::raw,
+    path::PathBuf,
 };
 
 use nix::errno::Errno;
@@ -17,8 +19,14 @@ use super::{
 
 #[derive(Clone)]
 pub struct AllProcInfo {
-    pub procs: HashMap<i32, Vec<Value>>,
+    pub procs: HashMap<i32, ProcEntry>,
     pub items: Vec<pids_item>,
+}
+
+#[derive(Clone)]
+pub struct ProcEntry {
+    pub stat: Vec<Value>,
+    pub socket_count: i32,
 }
 
 impl AllProcInfo {
@@ -37,8 +45,8 @@ impl AllProcInfo {
         // write out processes
         let output = &self.procs;
         for infos in output.values() {
-            write!(tw, "{}", infos.first().unwrap())?;
-            for info in &infos[1..] {
+            write!(tw, "{}", infos.stat.first().unwrap())?;
+            for info in &infos.stat[1..] {
                 write!(tw, "\t{info}")?
             }
             writeln!(tw).unwrap();
@@ -119,27 +127,55 @@ pub unsafe fn scan_processes(
     let mut procs = HashMap::with_capacity(loop_bound);
     for n in 0..loop_bound {
         let stack = unsafe { (*(*(*fetch).stacks.add(n))).head };
-        let mut entry: Vec<Value> = Vec::with_capacity(items.len());
-        for i in 0..items.len() {
-            let inner = *stack.add(i);
-            match read_from_union(inner) {
-                Ok(value) => entry.push(value),
-                Err(err) => return Err(ReadError::InvalidField(err)),
-            };
-        }
+        let stat = extract_stacks(items, stack)?;
 
-        let pid = entry.get(pid_index).expect("pid to be present");
+        let pid = stat.get(pid_index).expect("pid to be present");
         let id = match pid {
             Value::Int32(e) => *e,
             _ => panic!("pid does not match enum variant"),
         };
-        procs.insert(id, entry);
+        let socket_count = get_sockets(id)?;
+        procs.insert(id, ProcEntry { stat, socket_count });
     }
 
     Ok(AllProcInfo {
         procs,
         items: items.to_vec(),
     })
+}
+
+fn get_sockets(pid: i32) -> Result<i32, ReadError> {
+    let mut counter = 0;
+    let path = build_fd_path(pid);
+    for entry in read_dir(path)? {
+        let meep = read_link(entry?.path())?;
+        if meep.as_os_str().to_string_lossy().starts_with("socket") {
+            counter += 1;
+        }
+    }
+    Ok(counter)
+}
+
+fn build_fd_path(pid: i32) -> PathBuf {
+    let mut fd_path = PathBuf::from("/proc");
+    fd_path.push(pid.to_string());
+    fd_path.push("fd");
+    fd_path
+}
+
+unsafe fn extract_stacks(
+    items: &[pids_item],
+    stack: *mut pids_result,
+) -> Result<Vec<Value>, ReadError> {
+    let mut stat_entry: Vec<Value> = Vec::with_capacity(items.len());
+    for i in 0..items.len() {
+        let inner = *stack.add(i);
+        match read_from_union(inner) {
+            Ok(value) => stat_entry.push(value),
+            Err(err) => return Err(ReadError::InvalidField(err)),
+        };
+    }
+    Ok(stat_entry)
 }
 pub fn read_from_union(result: pids_result) -> Result<Value, InvalidFieldError> {
     match result.item {
