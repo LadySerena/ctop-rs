@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use containerd_client::{
     connect,
@@ -8,11 +8,15 @@ use containerd_client::{
     with_namespace,
 };
 
-use crate::{errors::InitError, pids_item, read::AllProcInfo, ContainerMetaReader};
+use crate::{
+    errors::InitError,
+    pids_item,
+    read::{AllProcInfo, Value},
+    ContainerMetaReader,
+};
 
 #[derive(Debug)]
 pub struct ContainerMeta {
-    process_id: i32,
     name: String,
     namespace: String,
 }
@@ -39,16 +43,7 @@ impl ContainerMetaReader for ContainerdReader {
     async fn proc_to_container(
         mut self,
         infos: AllProcInfo,
-    ) -> Result<Vec<ContainerMeta>, crate::errors::ReadError> {
-        let Some(pid_index) = infos
-            .items
-            .iter()
-            .position(|x| *x == pids_item::PIDS_ID_PID)
-        else {
-            return Err(crate::errors::ReadError::MissingItem(
-                pids_item::PIDS_ID_PID,
-            ));
-        };
+    ) -> Result<HashMap<i32, ContainerMeta>, crate::errors::ReadError> {
         let Some(cgroup_index) = infos
             .items
             .iter()
@@ -58,19 +53,17 @@ impl ContainerMetaReader for ContainerdReader {
                 pids_item::PIDS_CGROUP_V,
             ));
         };
-        let mut output: Vec<ContainerMeta> = Vec::new();
-        for info in infos.procs {
-            let pid = match info.get(pid_index).expect("all processes to have pid") {
-                crate::read::Value::Int32(p) => *p,
-                _ => unreachable!(),
-            };
+        let mut output: HashMap<i32, ContainerMeta> = HashMap::new();
+        for (pid, info) in infos.procs {
+            // I don't care for this multiline match
             let cgroup = match info
                 .get(cgroup_index)
                 .expect("all processes to have a cgroup")
             {
-                crate::read::Value::Str(c) => c.to_string(),
+                Value::Str(c) => c.to_string(),
                 _ => unreachable!(),
             };
+            // non containerized process
             if !cgroup.contains("kubelet-kubepods.slice") {
                 continue;
             }
@@ -98,11 +91,13 @@ impl ContainerMetaReader for ContainerdReader {
             let pod_name = labels.get("io.kubernetes.pod.name").unwrap();
             let pod_namespace = labels.get("io.kubernetes.pod.namespace").unwrap();
 
-            output.push(ContainerMeta {
-                process_id: pid,
-                name: pod_name.to_string(),
-                namespace: pod_namespace.to_string(),
-            });
+            output.insert(
+                pid,
+                ContainerMeta {
+                    name: pod_name.to_string(),
+                    namespace: pod_namespace.to_string(),
+                },
+            );
         }
 
         Ok(output)

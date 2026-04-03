@@ -5,12 +5,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::{
-    errors::ReadError,
-    pids_item,
-    read::{AllProcInfo, Value},
-    NetworkReader,
-};
+use crate::{errors::ReadError, read::AllProcInfo, NetworkReader};
 
 #[derive(Debug)]
 pub struct NetworkEntry {
@@ -65,23 +60,24 @@ impl NetworkReader for ProcNetReader {
     fn proc_to_network(
         self,
         info: AllProcInfo,
-    ) -> Result<HashMap<String, Vec<NetworkInfo>>, ReadError> {
+    ) -> Result<HashMap<i32, Vec<NetworkInfo>>, ReadError> {
         // building header struct
         let parsed_header = build_header();
-        // get index of pid within our proc structs
-        let id_index = info
-            .items
-            .iter()
-            .position(|item| *item == pids_item::PIDS_ID_PID)
-            .expect("pid to be present");
 
         let mut res = HashMap::with_capacity(info.procs.len());
 
-        for proc in info.procs {
-            let pid = proc.get(id_index).expect("pid to be present");
+        for pid in info.procs.keys() {
             let path = build_net_dev_path(pid);
             // TODO handle not found (ENOENT)
-            let handle = File::open(path).expect("file to be here");
+            let handle = match File::open(&path) {
+                Ok(handle) => handle,
+                Err(e) => {
+                    // sometimes a file won't be populated in procfs
+                    println!("{:?} {e}", &path);
+                    continue;
+                }
+            };
+
             let reader = BufReader::new(handle);
             // skip header since they are the same across processes
             let lines = reader.lines().skip(2);
@@ -90,7 +86,7 @@ impl NetworkReader for ProcNetReader {
                 let info = parse_proc_net(&parsed_header, line.unwrap());
                 interfaces.push(info);
             }
-            res.insert(pid.to_string(), interfaces);
+            res.insert(*pid, interfaces);
         }
 
         for (pid, interfaces) in &res {
@@ -157,7 +153,7 @@ fn parse_headings(index: usize, header: &str) -> Vec<String> {
         .collect()
 }
 
-fn build_net_dev_path(pid: &crate::read::Value) -> PathBuf {
+fn build_net_dev_path(pid: &i32) -> PathBuf {
     let mut net_path = PathBuf::from("/proc");
     net_path.push(pid.to_string());
     net_path.push("net/dev");

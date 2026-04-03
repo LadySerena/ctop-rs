@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     ffi::CStr,
     fmt::Display,
     io::{self, Write},
@@ -16,7 +17,7 @@ use super::{
 
 #[derive(Clone)]
 pub struct AllProcInfo {
-    pub procs: Vec<Vec<Value>>,
+    pub procs: HashMap<i32, Vec<Value>>,
     pub items: Vec<pids_item>,
 }
 
@@ -25,6 +26,8 @@ impl AllProcInfo {
         let mut tw = TabWriter::new(w);
         // writing the header
         // TODO figure out why I can't call items.join("\t")
+        // https://users.rust-lang.org/t/using-join-on-a-vec-mystruct/125867/2
+        // it looks like I would need to implement borrow for pid_item
         write!(tw, "{:?}", self.items.first().unwrap())?;
         for item in &self.items[1..] {
             write!(tw, "\t{item:?}")?;
@@ -33,24 +36,14 @@ impl AllProcInfo {
 
         // write out processes
         let output = &self.procs;
-        for process in output {
-            write!(tw, "{}", process.first().unwrap())?;
-            for info in &process[1..] {
+        for infos in output.values() {
+            write!(tw, "{}", infos.first().unwrap())?;
+            for info in &infos[1..] {
                 write!(tw, "\t{info}")?
             }
             writeln!(tw).unwrap();
         }
         tw.flush()
-    }
-}
-
-impl IntoIterator for AllProcInfo {
-    type Item = Vec<Value>;
-
-    type IntoIter = <Vec<Vec<Value>> as IntoIterator>::IntoIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.procs.into_iter()
     }
 }
 
@@ -118,8 +111,12 @@ pub unsafe fn scan_processes(
     if fetch.is_null() {
         return Err(ReadError::LibProc(LibProcError { err: Errno::last() }));
     }
+    let pid_index = items
+        .iter()
+        .position(|item| *item == pids_item::PIDS_ID_PID)
+        .expect("pid to be present");
     let loop_bound = usize::try_from((*(*fetch).counts).total).expect("convert total to usize");
-    let mut process_info: Vec<Vec<Value>> = Vec::with_capacity(loop_bound);
+    let mut procs = HashMap::with_capacity(loop_bound);
     for n in 0..loop_bound {
         let stack = unsafe { (*(*(*fetch).stacks.add(n))).head };
         let mut entry: Vec<Value> = Vec::with_capacity(items.len());
@@ -130,11 +127,17 @@ pub unsafe fn scan_processes(
                 Err(err) => return Err(ReadError::InvalidField(err)),
             };
         }
-        process_info.push(entry);
+
+        let pid = entry.get(pid_index).expect("pid to be present");
+        let id = match pid {
+            Value::Int32(e) => *e,
+            _ => panic!("pid does not match enum variant"),
+        };
+        procs.insert(id, entry);
     }
 
     Ok(AllProcInfo {
-        procs: process_info,
+        procs,
         items: items.to_vec(),
     })
 }

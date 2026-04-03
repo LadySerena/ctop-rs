@@ -5,8 +5,8 @@ use crate::{
     errors::{InitError, ReadError},
     init::{self, start, unref},
     pids_item,
-    read::scan_processes,
-    AllProcInfo, ProcReader,
+    read::{scan_processes, AllProcInfo},
+    ProcReader,
 };
 
 pub struct Procfs {

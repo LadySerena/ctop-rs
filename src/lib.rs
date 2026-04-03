@@ -36,7 +36,7 @@ pub trait ContainerMetaReader {
     fn proc_to_container(
         self,
         info: AllProcInfo,
-    ) -> impl Future<Output = Result<Vec<ContainerMeta>, ReadError>>;
+    ) -> impl Future<Output = Result<HashMap<i32, ContainerMeta>, ReadError>>;
 }
 
 pub trait NetworkReader {
@@ -47,5 +47,5 @@ pub trait NetworkReader {
     fn proc_to_network(
         self,
         info: AllProcInfo,
-    ) -> Result<HashMap<String, Vec<NetworkInfo>>, ReadError>;
+    ) -> Result<HashMap<i32, Vec<NetworkInfo>>, ReadError>;
 }

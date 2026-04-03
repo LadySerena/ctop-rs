@@ -1,6 +1,7 @@
 use std::{
     error::Error,
     fmt::{Display, Formatter},
+    io,
 };
 
 use containerd_client::tonic;
@@ -35,6 +36,7 @@ pub enum ReadError {
     InvalidField(InvalidFieldError),
     LibProc(LibProcError),
     MissingItem(pids_item),
+    FileError(io::Error),
 }
 
 impl Error for ReadError {}
@@ -47,6 +49,7 @@ impl Display for ReadError {
             ReadError::MissingItem(pids_item) => {
                 write!(f, "process info missing {pids_item:?}")
             }
+            ReadError::FileError(error) => error.fmt(f),
         }
     }
 }
