@@ -1,11 +1,13 @@
 use std::{collections::HashMap, future::Future};
 
+pub use crate::container_meta_reader::ContainerMeta;
+pub use crate::network_reader::NetworkInfo;
+pub use crate::network_reader::ProcNetReader;
+pub use crate::proc_reader::Procfs;
 pub use bindings::pids_item;
-use container_meta_reader::ContainerMeta;
+pub use container_meta_reader::ContainerdReader;
 use errors::{InitError, ReadError};
 use read::AllProcInfo;
-
-use crate::network_reader::NetworkInfo;
 
 #[allow(clippy::all)]
 #[allow(non_upper_case_globals)]
@@ -15,12 +17,13 @@ use crate::network_reader::NetworkInfo;
 mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
-pub mod container_meta_reader;
+mod container_meta_reader;
 mod errors;
 mod init;
-pub mod network_reader;
-pub mod proc_reader;
+mod network_reader;
+mod proc_reader;
 mod read;
+
 pub trait ProcReader {
     fn new(items: Vec<pids_item>) -> Result<Self, InitError>
     where

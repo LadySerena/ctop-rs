@@ -1,14 +1,13 @@
-use ctop_rs::{network_reader::ProcNetReader, pids_item};
+use ctop_rs::{
+    pids_item, ContainerMetaReader, ContainerdReader, NetworkReader, ProcNetReader, ProcReader,
+    Procfs,
+};
 #[cfg(target_os = "linux")]
 use std::io::stdout;
+
 #[cfg(target_os = "linux")]
 #[tokio::main]
 async fn main() {
-    use ctop_rs::{
-        container_meta_reader::ContainerdReader, proc_reader::Procfs, ContainerMetaReader,
-        NetworkReader, ProcReader,
-    };
-
     let items = vec![
         pids_item::PIDS_ID_PID,
         pids_item::PIDS_CGROUP_V,
