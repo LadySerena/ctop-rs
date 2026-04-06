@@ -115,33 +115,36 @@ pub unsafe fn scan_processes(
     info_pointer: *mut pids_info,
     items: &[pids_item],
 ) -> Result<AllProcInfo, ReadError> {
-    let fetch = bindings::procps_pids_reap(info_pointer, pids_fetch_type::PIDS_FETCH_TASKS_ONLY);
-    if fetch.is_null() {
-        return Err(ReadError::LibProc(LibProcError { err: Errno::last() }));
-    }
-    let pid_index = items
-        .iter()
-        .position(|item| *item == pids_item::PIDS_ID_PID)
-        .expect("pid to be present");
-    let loop_bound = usize::try_from((*(*fetch).counts).total).expect("convert total to usize");
-    let mut procs = HashMap::with_capacity(loop_bound);
-    for n in 0..loop_bound {
-        let stack = unsafe { (*(*(*fetch).stacks.add(n))).head };
-        let stat = extract_stacks(items, stack)?;
+    unsafe {
+        let fetch =
+            bindings::procps_pids_reap(info_pointer, pids_fetch_type::PIDS_FETCH_TASKS_ONLY);
+        if fetch.is_null() {
+            return Err(ReadError::LibProc(LibProcError { err: Errno::last() }));
+        }
+        let pid_index = items
+            .iter()
+            .position(|item| *item == pids_item::PIDS_ID_PID)
+            .expect("pid to be present");
+        let loop_bound = usize::try_from((*(*fetch).counts).total).expect("convert total to usize");
+        let mut procs = HashMap::with_capacity(loop_bound);
+        for n in 0..loop_bound {
+            let stack = unsafe { (*(*(*fetch).stacks.add(n))).head };
+            let stat = extract_stacks(items, stack)?;
 
-        let pid = stat.get(pid_index).expect("pid to be present");
-        let id = match pid {
-            Value::Int32(e) => *e,
-            _ => panic!("pid does not match enum variant"),
-        };
-        let socket_count = get_sockets(id)?;
-        procs.insert(id, ProcEntry { stat, socket_count });
-    }
+            let pid = stat.get(pid_index).expect("pid to be present");
+            let id = match pid {
+                Value::Int32(e) => *e,
+                _ => panic!("pid does not match enum variant"),
+            };
+            let socket_count = get_sockets(id)?;
+            procs.insert(id, ProcEntry { stat, socket_count });
+        }
 
-    Ok(AllProcInfo {
-        procs,
-        items: items.to_vec(),
-    })
+        Ok(AllProcInfo {
+            procs,
+            items: items.to_vec(),
+        })
+    }
 }
 
 fn get_sockets(pid: i32) -> Result<i32, ReadError> {
@@ -167,15 +170,17 @@ unsafe fn extract_stacks(
     items: &[pids_item],
     stack: *mut pids_result,
 ) -> Result<Vec<Value>, ReadError> {
-    let mut stat_entry: Vec<Value> = Vec::with_capacity(items.len());
-    for i in 0..items.len() {
-        let inner = *stack.add(i);
-        match read_from_union(inner) {
-            Ok(value) => stat_entry.push(value),
-            Err(err) => return Err(ReadError::InvalidField(err)),
-        };
+    unsafe {
+        let mut stat_entry: Vec<Value> = Vec::with_capacity(items.len());
+        for i in 0..items.len() {
+            let inner = *stack.add(i);
+            match read_from_union(inner) {
+                Ok(value) => stat_entry.push(value),
+                Err(err) => return Err(ReadError::InvalidField(err)),
+            };
+        }
+        Ok(stat_entry)
     }
-    Ok(stat_entry)
 }
 pub fn read_from_union(result: pids_result) -> Result<Value, InvalidFieldError> {
     match result.item {

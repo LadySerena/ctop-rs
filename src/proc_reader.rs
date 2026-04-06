@@ -1,12 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
+    ProcReader,
     bindings::pids_info,
     errors::{InitError, ReadError},
     init::{self, start, unref},
     pids_item,
-    read::{scan_processes, AllProcInfo},
-    ProcReader,
+    read::{AllProcInfo, scan_processes},
 };
 
 pub struct Procfs {

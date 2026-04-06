@@ -36,17 +36,21 @@ pub fn new(items: &mut [pids_item]) -> Result<Rc<RefCell<*mut pids_info>>, InitE
 }
 
 pub unsafe fn unref(mut info: *mut pids_info) {
-    let p: *mut *mut pids_info = &mut info;
+    unsafe {
+        let p: *mut *mut pids_info = &mut info;
 
-    procps_pids_unref(p);
+        procps_pids_unref(p);
+    }
 }
 unsafe fn verify_mounted_proc(
     info: &Rc<RefCell<*mut pids_info>>,
 ) -> Result<Box<pids_info>, InitError> {
-    let pointer: *mut pids_info = *info.borrow_mut();
-    let res = fatal_proc_unmounted(pointer, 1);
-    if res.is_null() {
-        return Err(InitError::EmptyPointer);
+    unsafe {
+        let pointer: *mut pids_info = *info.borrow_mut();
+        let res = fatal_proc_unmounted(pointer, 1);
+        if res.is_null() {
+            return Err(InitError::EmptyPointer);
+        }
+        Ok(Box::from_raw(pointer))
     }
-    Ok(Box::from_raw(pointer))
 }

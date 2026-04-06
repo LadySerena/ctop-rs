@@ -1,6 +1,6 @@
 use ctop_rs::{
-    pids_item, ContainerMetaReader, ContainerdReader, NetworkReader, ProcNetReader, ProcReader,
-    Procfs,
+    ContainerMetaReader, ContainerdReader, NetworkReader, ProcNetReader, ProcReader, Procfs,
+    pids_item,
 };
 #[cfg(target_os = "linux")]
 use std::io::stdout;

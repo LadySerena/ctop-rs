@@ -2,17 +2,17 @@ use std::{collections::HashMap, path::Path};
 
 use containerd_client::{
     connect,
-    services::v1::{containers_client::ContainersClient, GetContainerRequest},
-    tonic::transport::Channel,
+    services::v1::{GetContainerRequest, containers_client::ContainersClient},
     tonic::Request,
+    tonic::transport::Channel,
     with_namespace,
 };
 
 use crate::{
+    ContainerMetaReader,
     errors::InitError,
     pids_item,
     read::{AllProcInfo, Value},
-    ContainerMetaReader,
 };
 
 #[derive(Debug)]

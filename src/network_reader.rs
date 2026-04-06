@@ -5,7 +5,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::{errors::ReadError, read::AllProcInfo, NetworkReader};
+use crate::{NetworkReader, errors::ReadError, read::AllProcInfo};
 
 #[derive(Debug)]
 pub struct NetworkEntry {
