@@ -15,7 +15,7 @@ use crate::{
     read::{AllProcInfo, Value},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ContainerMeta {
     name: String,
     namespace: String,
@@ -42,7 +42,7 @@ impl ContainerMetaReader for ContainerdReader {
 
     async fn proc_to_container(
         mut self,
-        infos: AllProcInfo,
+        infos: &AllProcInfo,
     ) -> Result<HashMap<i32, ContainerMeta>, crate::errors::ReadError> {
         let Some(cgroup_index) = infos
             .items
@@ -54,7 +54,7 @@ impl ContainerMetaReader for ContainerdReader {
             ));
         };
         let mut output: HashMap<i32, ContainerMeta> = HashMap::new();
-        for (pid, info) in infos.procs {
+        for (pid, info) in &infos.procs {
             // I don't care for this multiline match
             let cgroup = match info
                 .stat
@@ -93,7 +93,7 @@ impl ContainerMetaReader for ContainerdReader {
             let pod_namespace = labels.get("io.kubernetes.pod.namespace").unwrap();
 
             output.insert(
-                pid,
+                *pid,
                 ContainerMeta {
                     name: pod_name.to_string(),
                     namespace: pod_namespace.to_string(),

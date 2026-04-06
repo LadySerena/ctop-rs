@@ -7,6 +7,7 @@ pub use crate::proc_reader::Procfs;
 pub use bindings::pids_item;
 pub use container_meta_reader::ContainerdReader;
 use errors::{InitError, ReadError};
+pub use join::join;
 use read::AllProcInfo;
 
 #[allow(clippy::all)]
@@ -20,9 +21,11 @@ mod bindings {
 mod container_meta_reader;
 mod errors;
 mod init;
+mod join;
 mod network_reader;
 mod proc_reader;
 mod read;
+pub mod util;
 
 pub trait ProcReader {
     fn new(items: Vec<pids_item>) -> Result<Self, InitError>
@@ -38,7 +41,7 @@ pub trait ContainerMetaReader {
         Self: Sized;
     fn proc_to_container(
         self,
-        info: AllProcInfo,
+        info: &AllProcInfo,
     ) -> impl Future<Output = Result<HashMap<i32, ContainerMeta>, ReadError>>;
 }
 
@@ -49,6 +52,6 @@ pub trait NetworkReader {
 
     fn proc_to_network(
         self,
-        info: AllProcInfo,
+        info: &AllProcInfo,
     ) -> Result<HashMap<i32, Vec<NetworkInfo>>, ReadError>;
 }

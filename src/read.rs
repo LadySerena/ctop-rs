@@ -23,7 +23,7 @@ pub struct AllProcInfo {
     pub items: Vec<pids_item>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ProcEntry {
     pub stat: Vec<Value>,
     pub socket_count: i32,
@@ -128,7 +128,7 @@ pub unsafe fn scan_processes(
         let loop_bound = usize::try_from((*(*fetch).counts).total).expect("convert total to usize");
         let mut procs = HashMap::with_capacity(loop_bound);
         for n in 0..loop_bound {
-            let stack = unsafe { (*(*(*fetch).stacks.add(n))).head };
+            let stack = (*(*(*fetch).stacks.add(n))).head;
             let stat = extract_stacks(items, stack)?;
 
             let pid = stat.get(pid_index).expect("pid to be present");

@@ -7,14 +7,14 @@ use std::{
 
 use crate::{NetworkReader, errors::ReadError, read::AllProcInfo};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NetworkEntry {
     pub bytes: u64,
     pub errors: u64,
     pub dropped: u64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NetworkInfo {
     pub interface: String,
     pub transmit: NetworkEntry,
@@ -59,7 +59,7 @@ impl NetworkReader for ProcNetReader {
 
     fn proc_to_network(
         self,
-        info: AllProcInfo,
+        info: &AllProcInfo,
     ) -> Result<HashMap<i32, Vec<NetworkInfo>>, ReadError> {
         // building header struct
         let parsed_header = build_header();
