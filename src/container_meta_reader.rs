@@ -17,8 +17,8 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct ContainerMeta {
-    name: String,
-    namespace: String,
+    pub name: String,
+    pub namespace: String,
 }
 
 pub struct ContainerdReader {

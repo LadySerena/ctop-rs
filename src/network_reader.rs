@@ -82,19 +82,19 @@ impl NetworkReader for ProcNetReader {
             // skip header since they are the same across processes
             let lines = reader.lines().skip(2);
             let mut interfaces = Vec::new();
-            for line in lines {
-                let info = parse_proc_net(&parsed_header, line.unwrap());
+            // filter out bad lines
+            for line in lines.filter_map(|l| l.ok()) {
+                let trimmed = line.trim_start();
+                if trimmed.starts_with("lo") {
+                    // skip localhost
+                    continue;
+                }
+                let info = parse_proc_net(&parsed_header, trimmed);
                 interfaces.push(info);
             }
             res.insert(*pid, interfaces);
         }
 
-        for (pid, interfaces) in &res {
-            println!("{pid}");
-            for interface in interfaces {
-                println!("\t{:?}", interface);
-            }
-        }
         Ok(res)
     }
 }
@@ -123,7 +123,7 @@ fn build_header() -> Vec<String> {
     parsed_header
 }
 
-fn parse_proc_net(header: &[String], data_line: String) -> NetworkInfo {
+fn parse_proc_net(header: &[String], data_line: &str) -> NetworkInfo {
     let mut data_iter = data_line.split_whitespace();
     // all interfaces end with a colon which we're not interested in
     let interface = data_iter.next().unwrap().replace(":", "");

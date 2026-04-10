@@ -40,7 +40,7 @@ impl AllProcInfo {
         for item in &self.items[1..] {
             write!(tw, "\t{item:?}")?;
         }
-        writeln!(tw).unwrap();
+        writeln!(tw)?;
 
         // write out processes
         let output = &self.procs;

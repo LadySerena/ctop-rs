@@ -23,23 +23,49 @@ pub struct Entry {
 
 impl SuperInfo {
     pub fn write_table<U: io::Write>(&self, w: U) -> io::Result<()> {
-        let tw = TabWriter::new(w);
-        self.write_header(tw)?;
-        Ok(())
+        // TODO add new columns for container meta and network info
+        let mut tw = TabWriter::new(w);
+        self.write_header(&mut tw)?;
+        for entry in &self.processes {
+            entry.write_line(&mut tw)?;
+        }
+        tw.flush()
     }
 
-    fn write_header<U: io::Write>(&self, mut w: U) -> io::Result<()> {
+    fn write_header<U: io::Write>(&self, w: &mut TabWriter<U>) -> io::Result<()> {
         write!(w, "{:?}", self.items.first().unwrap())?;
         for item in &self.items[1..] {
             write!(w, "\t{item:?}")?;
         }
-        Ok(())
+        // container columns
+        write!(w, "\tname\tnamespace")?;
+        // write out network stats and sockets
+        write!(w, "\treceive_bytes\ttransmit_bytes\tsocket_count")?;
+        writeln!(w)
     }
 }
 
 impl Entry {
-    pub fn write_line<U: io::Write>(&self, mut w: U) -> io::Result<()> {
-        Ok(())
+    fn write_line<U: io::Write>(&self, w: &mut TabWriter<U>) -> io::Result<()> {
+        write!(w, "{}", self.proc.stat.first().unwrap())?;
+        for info in &self.proc.stat[1..] {
+            write!(w, "\t{info}")?
+        }
+        // container data if available
+        match &self.container {
+            Some(c) => write!(w, "\t{}\t{}", c.name, c.namespace)?,
+            None => write!(w, "\tN/A\tN/A")?,
+        }
+        match &self.net {
+            Some(n) => {
+                let receive_bytes: u64 = n.iter().map(|i| i.receive.bytes).sum();
+                let transmit_bytes: u64 = n.iter().map(|i| i.transmit.bytes).sum();
+                let socket = self.proc.socket_count;
+                write!(w, "\t{receive_bytes}\t{transmit_bytes}\t{socket}")?
+            }
+            None => write!(w, "\tN/A\tN/A\tN/a")?,
+        }
+        writeln!(w)
     }
 }
 

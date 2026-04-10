@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{collections::HashMap, future::Future};
 
 pub use crate::container_meta_reader::ContainerMeta;
@@ -5,6 +6,7 @@ pub use crate::network_reader::NetworkInfo;
 pub use crate::network_reader::ProcNetReader;
 pub use crate::proc_reader::Procfs;
 pub use bindings::pids_item;
+use clap::Parser;
 pub use container_meta_reader::ContainerdReader;
 use errors::{InitError, ReadError};
 pub use join::join;
@@ -25,7 +27,13 @@ mod join;
 mod network_reader;
 mod proc_reader;
 mod read;
-pub mod util;
+
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+pub struct App {
+    #[arg(short, long)]
+    pub containerd_socket: PathBuf,
+}
 
 pub trait ProcReader {
     fn new(items: Vec<pids_item>) -> Result<Self, InitError>
