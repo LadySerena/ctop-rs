@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     clang \
     clang-tools \
     pkg-config \
-    libproc2-dev
+    libproc2-dev \
+    protobuf-compiler
 
 # Copy our source and setup our working dir.
 COPY . /tmp/build

@@ -24,6 +24,7 @@
           libllvm
           libclang
           libclang.lib
+          protobuf
         ];
         buildInputs = with pkgs; [ pkg-config ];
       in with pkgs; {
