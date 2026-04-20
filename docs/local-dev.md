@@ -29,6 +29,7 @@ Install the following packages via apt:
 - rustup
 - pkg-config
 - libproc2-dev
+- protobuf-compiler
 
 ### Running ctop against a local kubernetes cluster
 
