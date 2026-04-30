@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+proc_header_dir=$(pkg-config libproc2 --cflags|sed s/-I//g)
+pids_header="${proc_header_dir}/libproc2/pids.h"
+
+echo "$pids_header"
+mapfile enum_types < <(grep  -P 'PIDS_.*\/\/' "$pids_header"| awk '{print $3}'|sort |uniq|tail +3)
+
+for enum_type in "${enum_types[@]}"; do
+  echo "$enum_type"
+  grep  -P 'PIDS_.*\/\/' "$pids_header"| awk '{print "pids_item::"$1}' > "foo-${enum_type}.txt"
+done
