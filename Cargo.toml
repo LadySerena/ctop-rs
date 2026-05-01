@@ -2,6 +2,10 @@
 name = "ctop-rs"
 version = "0.1.0"
 edition = "2024"
+license = "GPL-2.0-or-later"
+repository = "https://github.com/LadySerena/ctop-rs"
+readme = "README.md"
+description = "An attempt at yet another top clone but this time with container support"
 
 [lib]
 doctest = false
@@ -16,3 +20,7 @@ tokio = { version = "1.49.0", features = ["full"] }
 [build-dependencies]
 bindgen = "0.72.0"
 pkg-config = "0.3.32"
+
+[package.metadata.deb]
+maintainer = "Serena Tiede <serena.tiede+ctop-rs@gmail.com>"
+depends = "libproc2-0"

@@ -25,8 +25,10 @@
           libclang
           libclang.lib
           protobuf
+          cargo-deb
+          dpkg
         ];
-        buildInputs = with pkgs; [ pkg-config ];
+        buildInputs = with pkgs; [ pkg-config llvmPackages.bintools ];
       in with pkgs; {
         devShells.default = mkShell {
           inherit nativeBuildInputs buildInputs;

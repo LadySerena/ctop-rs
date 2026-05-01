@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+build_image() {
+  arch=$1
+  echo "building package for $arch"
+  cat<<eof | docker run --platform "$arch" -i --volume ./out:/out --entrypoint=bash ctop-builder
+  cargo deb && ls -alh ./target && cp ./target/debian/*.deb /out/
+eof
+}
+
+echo "building builder container"
+mkdir ./out
+docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.dev -t ctop-builder --load .
+
+build_image "linux/amd64"
+build_image "linux/arm64"
+

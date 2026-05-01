@@ -5,13 +5,15 @@ RUN apt-get update && apt-get install -y \
     clang \
     clang-tools \
     pkg-config \
+    build-essential  \
+    protobuf-compiler \
+    pkg-config \
     libproc2-dev \
     protobuf-compiler
-
+    
+RUN cargo install cargo-deb@3.6.3
 # Copy our source and setup our working dir.
 COPY . /tmp/build
 WORKDIR /tmp/build
-
-RUN cargo build
 
 ENTRYPOINT [ "bash" ]

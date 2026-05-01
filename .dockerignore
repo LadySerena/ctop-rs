@@ -1,0 +1,6 @@
+nix-build-deb
+target/
+out/
+debs/
+.dockerignore
+.gitignore
