@@ -1,0 +1,31 @@
+/// Enum containing fields from proc_pid_stat
+/// for more information consult `man proc_pid_stat`
+pub enum PidStatItems {
+    /// Process id (stat)
+    Pid(i32),
+    State(String),
+    Ppid(i32),
+    Pgrp(i32),
+    Minflt(u64),
+    Cminflt(u64),
+    Majflt(u64),
+    Cmajflt(u64),
+    Utime(u64),
+    Stime(u64),
+    Cutime(i64),
+    Cstime(i64),
+    NumThreads(i64),
+    Starttime(u128),
+    Vsize(u64),
+    Rss(i64),
+    Rsslim(u64),
+    DelayacctBlkioTicks(u128),
+    GuestTime(u64),
+    CguestTime(i64),
+    CgroupName(String),
+    CmdLine(String),
+    ReadBytes(i64),
+    WriteBytes(i64),
+    SysCallRead(i64),
+    SysCallWrite(i64),
+}
