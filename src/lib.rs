@@ -31,8 +31,10 @@ mod read;
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 pub struct App {
-    #[arg(short, long)]
+    #[arg(short, long, default_value = "/var/run/containerd/containerd.sock")]
     pub containerd_socket: PathBuf,
+    #[arg(short = 'f', long, default_value = "kubelet-kubepods.slice")]
+    pub cgroup_filter: String,
 }
 
 pub trait ProcReader {
@@ -44,7 +46,10 @@ pub trait ProcReader {
 }
 
 pub trait ContainerMetaReader {
-    fn new(runtime_endpoint: String) -> impl Future<Output = Result<Self, InitError>>
+    fn new(
+        runtime_endpoint: String,
+        filter: String,
+    ) -> impl Future<Output = Result<Self, InitError>>
     where
         Self: Sized;
     fn proc_to_container(

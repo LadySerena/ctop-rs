@@ -18,9 +18,12 @@ async fn main() {
     let getter = Procfs::new(items.clone()).unwrap();
     let output = getter.scan_pids().unwrap();
     // TODO make configurable
-    let meta = ContainerdReader::new(cli_opts.containerd_socket.to_string_lossy().to_string())
-        .await
-        .unwrap();
+    let meta = ContainerdReader::new(
+        cli_opts.containerd_socket.to_string_lossy().to_string(),
+        cli_opts.cgroup_filter,
+    )
+    .await
+    .unwrap();
     let mapping = meta.proc_to_container(&output).await.unwrap();
 
     let net_reader = ProcNetReader::new().unwrap();

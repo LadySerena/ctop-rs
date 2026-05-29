@@ -23,10 +23,11 @@ pub struct ContainerMeta {
 
 pub struct ContainerdReader {
     client: ContainersClient<Channel>,
+    cgroup_filter: String,
 }
 
 impl ContainerMetaReader for ContainerdReader {
-    async fn new(runtime_endpoint: String) -> Result<Self, InitError>
+    async fn new(runtime_endpoint: String, filter: String) -> Result<Self, InitError>
     where
         Self: Sized,
     {
@@ -37,7 +38,10 @@ impl ContainerMetaReader for ContainerdReader {
 
         let client = ContainersClient::new(channel);
 
-        Ok(Self { client })
+        Ok(Self {
+            client,
+            cgroup_filter: filter,
+        })
     }
 
     async fn proc_to_container(
@@ -65,7 +69,7 @@ impl ContainerMetaReader for ContainerdReader {
                 _ => unreachable!(),
             };
             // non containerized process
-            if !cgroup.contains("kubelet-kubepods.slice") {
+            if !cgroup.contains(&self.cgroup_filter) {
                 continue;
             }
             let cgroup_path = Path::new(&cgroup);
