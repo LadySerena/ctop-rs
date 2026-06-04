@@ -38,27 +38,27 @@ pub enum PidStatItems {
     /// number of OS threads (stat)
     NumThreads(i64),
     /// Time process started after boot (clock ticks) (stat)
-    // TODO whether to translate this
-    // also need to sort out libc nonsense for _SC_CLK_TCK
-    // google says I can use the libc crate, but during link time point to musl libc
-    // then we get one static binary :3
     Starttime(u128),
     /// virtual memory size (bytes) (stat)
     Vsize(u64),
-    /// parent PID (stat)
+    /// resident set size (number of pages) (stat)
     Rss(i64),
-    /// parent PID (stat)
+    /// soft limit in bytes of RSS for process (stat)
     Rsslim(u64),
-    /// parent PID (stat)
+    /// block i/o delays clock ticks (stat)
     DelayacctBlkioTicks(u128),
-    /// parent PID (stat)
+    /// number of clock ticks a guest VM ran on a virtual CPU(stat)
     GuestTime(u64),
-    /// parent PID (stat)
+    /// guest time of process's children (stat)
     CguestTime(i64),
-    /// parent PID (cgroup)
+    /// cgroup name (cgroup)
     CgroupName(String),
     /// (cmdline)
     CmdLine(String),
+}
+
+/// enum for items in proc_pid_io
+pub enum PidIOItems {
     /// (io)
     ReadBytes(i64),
     /// (io)
