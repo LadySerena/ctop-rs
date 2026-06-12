@@ -1,3 +1,13 @@
+// refactoring into a composite pattern
+// common ops
+// format specifier
+// for presentation is the field visible in output
+
+pub struct PidItem {
+    format_specifier: String,
+    display_visibility: bool,
+}
+
 /// Enum containing fields from proc_pid_stat
 /// for more information consult `man proc_pid_stat`
 pub enum PidStatItems {
@@ -57,4 +67,16 @@ pub enum PidStatItems {
     SysCallRead(i64),
     /// (io)
     SysCallWrite(i64),
+}
+
+/// enum containing identifiers for /proc/net/dev
+pub enum PidNetDevItems {
+    Bytes(u64),
+    Packets(u64),
+    Dropped(u64),
+}
+
+/// enum containing /proc/pid/*/cgroup
+pub enum PidCgroup {
+    Cgroup(String),
 }
