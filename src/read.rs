@@ -208,6 +208,10 @@ pub fn read_from_union(result: pids_result) -> Result<Value, InvalidFieldError> 
         pids_item::PIDS_TICS_ALL | pids_item::PIDS_TICS_ALL_C | pids_item::PIDS_TICS_USER => unsafe {
             Ok(result.result.ull_int.into())
         },
+        pids_item::PIDS_IO_READ_BYTES
+        | pids_item::PIDS_IO_WRITE_BYTES
+        | pids_item::PIDS_IO_READ_OPS
+        | pids_item::PIDS_IO_WRITE_OPS => unsafe { Ok(result.result.ul_int.into()) },
         // TODO I don't love that we can't give the user errors at compile time - @LadySerena
         _ => Err(InvalidFieldError { field: result.item }),
     }

@@ -40,7 +40,7 @@ Install [kind] which creates a Kubernetes cluster within a docker container.
 The cgroup hierarchy will be under the docker container for the kind control
 plane. Using `kind create cluster` (default options), you can list all the
 cgroups via
-`docker ps -f Name=kind-control-plane --format json|jq '.ID' | xargs -I{} docker inspect {}| jq '.[0].Id' | xargs -I{} systemd-cgls /system.slice/docker-{}.scope`.
+`docker ps -f Name=kind-control-plane --format json|jq '.ID' | xargs -I{} docker inspect {}| jq '.[0].Id' | xargs -I{} systemd-cgls /system.slice/docker-{}.scope/init.scope`.
 
 The command will filter your running containers searching for a container named
 "kind-control-plane" and getting the long container ID. The container ID will be
@@ -80,6 +80,11 @@ CGroup /system.slice/docker-19389c03ce644c66b0d9276214d8529ebf3c95110caefd3bc4a5
     │ ├─kubelet-kubepods-besteffort-pod7e915e12_ded7_4b8e_84cb_55dd063ce065.slice
 ...
 ```
+
+Then to run the compiled binary
+
+`sudo ./target/debug/ctop-rs -c /proc/{PID_FROM_PREVIOUS_STEP}/root/var/run/containerd/containerd.sock`
+
 
 ## macOS
 

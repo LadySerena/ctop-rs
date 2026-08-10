@@ -23,7 +23,6 @@ pub struct Entry {
 
 impl SuperInfo {
     pub fn write_table<U: io::Write>(&self, w: U) -> io::Result<()> {
-        // TODO add new columns for container meta and network info
         let mut tw = TabWriter::new(w);
         self.write_header(&mut tw)?;
         for entry in &self.processes {
@@ -33,9 +32,17 @@ impl SuperInfo {
     }
 
     fn write_header<U: io::Write>(&self, w: &mut TabWriter<U>) -> io::Result<()> {
-        write!(w, "{:?}", self.items.first().unwrap())?;
+        // don't love this hack for removing cgroup
+        if let Some(first) = self.items.first()
+            && *first != pids_item::PIDS_CGROUP_V
+        {
+            write!(w, "{:?}", first)?;
+        };
+
         for item in &self.items[1..] {
-            write!(w, "\t{item:?}")?;
+            if *item != pids_item::PIDS_CGROUP_V {
+                write!(w, "\t{item:?}")?;
+            }
         }
         // container columns
         write!(w, "\tname\tnamespace")?;
@@ -75,13 +82,28 @@ pub fn join(
     net: HashMap<i32, Vec<NetworkInfo>>,
 ) -> SuperInfo {
     let mut res: Vec<Entry> = Vec::with_capacity(procs.procs.len());
+    let Some(cgroup_index) = procs
+        .items
+        .iter()
+        .position(|x| *x == pids_item::PIDS_CGROUP_V)
+    else {
+        panic!("this should always be here");
+    };
+    let new_items = procs
+        .items
+        .iter()
+        .filter(|i| **i != pids_item::PIDS_CGROUP_V)
+        .copied()
+        .collect();
+
     // iterate over containers since that will always be a subset of all processes
-    for (pid, proc) in procs.procs {
+    for (pid, mut proc) in procs.procs {
         // not every process is containerized
         let container = containers.get(&pid).cloned();
         // sometimes you can't read the proc/pid/network/dev
         // idk it's a pseudo filesystem *shrug*
         let net = net.get(&pid).cloned();
+        proc.stat.remove(cgroup_index);
         res.push(Entry {
             proc,
             container,
@@ -89,7 +111,7 @@ pub fn join(
         });
     }
     SuperInfo {
-        items: procs.items.clone(),
+        items: new_items,
         processes: res,
     }
 }

@@ -14,6 +14,10 @@ async fn main() {
         pids_item::PIDS_ID_PID,
         pids_item::PIDS_CGROUP_V,
         pids_item::PIDS_TICS_ALL,
+        pids_item::PIDS_IO_READ_BYTES,
+        pids_item::PIDS_IO_READ_OPS,
+        pids_item::PIDS_IO_WRITE_BYTES,
+        pids_item::PIDS_IO_WRITE_OPS,
     ];
     let getter = Procfs::new(items.clone()).unwrap();
     let output = getter.scan_pids().unwrap();
