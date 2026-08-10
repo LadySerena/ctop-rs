@@ -3,8 +3,7 @@ use std::{collections::HashMap, path::Path};
 use containerd_client::{
     connect,
     services::v1::{GetContainerRequest, containers_client::ContainersClient},
-    tonic::Request,
-    tonic::transport::Channel,
+    tonic::{Request, transport::Channel},
     with_namespace,
 };
 
@@ -76,6 +75,7 @@ impl ContainerMetaReader for ContainerdReader {
             // we have to trim the resulting path
             // kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod70c196014b615996a2893e59ef9bd41d.slice/cri-containerd-8f92d57269cccc8617178621006662f45c086e1251ba6ce5508b7f6165d8a2a1.scope
             // we want the last part but without the leading cri-containerd- and the trailing .scope
+            // need to ignore pause containers
             let container_id = cgroup_path
                 .iter()
                 .find(|x| x.to_str().unwrap().starts_with("cri-containerd"))
