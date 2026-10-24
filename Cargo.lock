@@ -698,6 +698,11 @@ dependencies = [
 [[package]]
 name = "procfs"
 version = "0.1.0"
+dependencies = [
+ "bindgen",
+ "nix",
+ "pkg-config",
+]
 
 [[package]]
 name = "prost"
